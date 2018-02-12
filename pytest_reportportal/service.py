@@ -110,8 +110,22 @@ class PyTestServiceClass(with_metaclass(Singleton, object)):
     def _get_tags(self, item):
         # Try to extract names of @pytest.mark.* decorators used for test item
         # and exclude those which present in rp_ignore_tags parameter
-        return [k for k in item.keywords if item.get_marker(k) is not None
-                and k not in self.ignored_tags]
+        markers_list = []
+        for k in item.keywords:
+            if not item.get_marker(k) or k in self.ignored_tags:
+                continue
+            # simple MarkDecorator
+            if not item.get_marker(k).args and not item.get_marker(k).kwargs:
+                markers_list.append(k)
+            # parametrized MarkDecorator
+            if item.get_marker(k).args:
+                for marker_arg in item.get_marker(k).args:
+                    markers_list.append("%s(%s)" % (k, marker_arg))
+            # parametrized MarkDecorator with kwargs
+            if item.get_marker(k).kwargs:
+                for mrk_key, mrk_value in item.get_marker(k).kwargs.iteritems():
+                    markers_list.append("%s(%s=%s)" % (k, mrk_key, mrk_value))
+        return markers_list
 
     def finish_pytest_item(self, status, issue=None):
         self._stop_if_necessary()
