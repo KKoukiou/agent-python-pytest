@@ -50,6 +50,9 @@ class RPReportListener(object):
                 # This happens for example when a fixture fails to run
                 # causing the test to error
                 self.result = 'FAILED'
+            if report.skipped:
+                # This happens when the test is skipped during setup
+                self.result = 'SKIPPED'
 
         if report.when == 'call':
             if report.passed:
